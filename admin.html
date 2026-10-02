@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diamond Airbus — Super Admin Management &amp; Full Site CMS</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans, JetBrains Mono & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- html2pdf for instant offline ticket PDF downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              dark: '#070b14',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="admin.css?v=3.5" />
+</head>
+<body class="bg-[#070b14] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-600 selection:text-white">
+
+  <!-- ========================================================================= -->
+  <!-- LOGIN AUTH MODAL / GATE -->
+  <!-- ========================================================================= -->
+  <div id="admin-login-modal" class="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden text-center">
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-600/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center mx-auto mb-5 shadow-lg shadow-brand-600/30">
+        <span class="material-symbols-outlined text-3xl">admin_panel_settings</span>
+      </div>
+
+      <h2 class="text-2xl font-black text-white tracking-tight mb-1">Diamond Airbus Portal</h2>
+      <p class="text-xs text-slate-400 font-medium mb-6">Enter Super Admin passcode to unlock full management &amp; CMS controls.</p>
+
+      <form id="admin-login-form" onsubmit="event.preventDefault(); window.handleAdminLogin && window.handleAdminLogin();" class="space-y-4">
+        <div class="text-left">
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Super Admin Passcode</label>
+          <div class="relative">
+            <input type="password" id="admin-passcode-input" placeholder="Enter passcode (e.g. admin123)" required autofocus
+              class="w-full bg-[#101a30] border border-slate-700 focus:border-brand-500 rounded-xl px-4 py-3 text-sm font-bold text-white placeholder-slate-500 outline-none transition duration-200" />
+            <button type="button" onclick="togglePasscodeVisibility()" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200">
+              <span class="material-symbols-outlined text-lg" id="passcode-eye-icon">visibility</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="login-error-msg" class="hidden text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-xl"></div>
+
+        <button type="submit" id="btn-admin-login"
+          class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-700 hover:from-brand-500 hover:to-indigo-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-brand-600/25 transition duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-98">
+          <span>Authenticate &amp; Enter Dashboard</span>
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+        <span>Diamond Airbus CMS v3.5</span>
+        <a href="index.html" class="text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1">
+          <span>Go to Main Site</span>
+          <span class="material-symbols-outlined text-xs">open_in_new</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APP WRAPPER (HIDDEN UNTIL AUTHENTICATED) -->
+  <!-- ========================================================================= -->
+  <div id="admin-main-app" class="hidden flex-1 flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <!-- ======================================================================= -->
+    <!-- SIDEBAR NAVIGATION -->
+    <!-- ======================================================================= -->
+    <aside class="w-full md:w-64 bg-[#0d1527] border-r border-slate-800/80 flex flex-col shrink-0 z-20">
+      
+      <!-- Logo Header -->
+      <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-black shadow-md">
+            <span class="material-symbols-outlined text-xl">directions_bus</span>
+          </div>
+          <div>
+            <h1 class="text-sm font-black tracking-tight text-white leading-tight">DIAMOND AIRBUS</h1>
+            <p class="text-[9px] font-black uppercase tracking-widest text-brand-400">SUPER ADMIN CMS</p>
+          </div>
+        </div>
+
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 text-[9px] font-black" title="Live Telemetry Stream">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          LIVE
+        </span>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 p-3.5 space-y-1.5 overflow-y-auto">
+        <button onclick="switchAdminTab('dashboard')" id="nav-btn-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 shadow-md shadow-brand-600/20 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">dashboard</span>
+          <span>Dashboard &amp; Overview</span>
+        </button>
+
+        <button onclick="switchAdminTab('bookings')" id="nav-btn-bookings" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-lg">confirmation_number</span>
+            <span>Bookings &amp; Tickets</span>
+          </div>
+          <span id="badge-pending-count" class="hidden px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px]">0</span>
+        </button>
+
+        <button onclick="switchAdminTab('site-editor')" id="nav-btn-site-editor" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg text-amber-400">edit_note</span>
+          <span>WordPress Site CMS</span>
+        </button>
+
+        <button onclick="switchAdminTab('seatmap')" id="nav-btn-seatmap" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">airline_seat_recline_extra</span>
+          <span>Live Seat Matrix</span>
+        </button>
+
+        <button onclick="switchAdminTab('routes')" id="nav-btn-routes" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">route</span>
+          <span>Routes &amp; Pricing</span>
+        </button>
+
+        <button onclick="switchAdminTab('fleet')" id="nav-btn-fleet" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">airport_shuttle</span>
+          <span>Fleet &amp; Coaches</span>
+        </button>
+
+        <button onclick="switchAdminTab('media')" id="nav-btn-media" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">perm_media</span>
+          <span>Media &amp; Image Uploads</span>
+        </button>
+
+        <button onclick="switchAdminTab('staff')" id="nav-btn-staff" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">badge</span>
+          <span>Counter Staff POS</span>
+        </button>
+
+        <button onclick="switchAdminTab('charters')" id="nav-btn-charters" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">tour</span>
+          <span>Bus Charter Inquiries</span>
+        </button>
+
+        <button onclick="switchAdminTab('system')" id="nav-btn-system" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg">settings_suggest</span>
+          <span>System &amp; Data Wipe</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-slate-800/80 space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-black text-xs">
+              SA
+            </div>
+            <div>
+              <p class="font-black text-slate-200 text-[11px] leading-tight">Super Admin</p>
+              <p class="text-[9px] text-slate-500 font-mono">Full Site Master</p>
+            </div>
+          </div>
+          <button onclick="logoutAdmin()" title="Logout" class="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-rose-950 text-slate-400 hover:text-rose-400 flex items-center justify-center transition cursor-pointer">
+            <span class="material-symbols-outlined text-base">logout</span>
+          </button>
+        </div>
+
+        <a href="index.html" target="_blank" class="w-full py-2 px-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
+          <span class="material-symbols-outlined text-sm">public</span>
+          <span>Open Public Website</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ======================================================================= -->
+    <!-- MAIN CONTENT AREA -->
+    <!-- ======================================================================= -->
+    <main class="flex-1 flex flex-col overflow-y-auto bg-[#070b14]">
+      
+      <!-- Top Action Bar -->
+      <header class="bg-[#0d1527]/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 sticky top-0 z-10">
+        <div class="flex items-center gap-3">
+          <h2 id="current-tab-title" class="text-lg font-black text-white tracking-tight">Dashboard &amp; Performance Overview</h2>
+          <span id="tab-subtitle" class="hidden md:inline-block text-xs font-semibold text-slate-400 border-l border-slate-700 pl-3">Live Fleet Analytics</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Audio Toggle -->
+          <button onclick="toggleAudioNotifications()" id="audio-toggle-btn" title="Toggle Sound Alert on New Bookings" class="h-9 px-3 rounded-xl bg-[#101a30] hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
+            <span class="material-symbols-outlined text-base text-amber-400" id="audio-icon">volume_up</span>
+            <span class="hidden sm:inline" id="audio-label">Alerts ON</span>
+          </button>
+
+          <!-- Refresh Button -->
+          <button onclick="refreshAdminData(true)" title="Force Refresh Data" class="h-9 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-black flex items-center gap-1.5 transition shadow-sm cursor-pointer active:scale-95">
+            <span class="material-symbols-outlined text-base" id="refresh-spin-icon">refresh</span>
+            <span class="hidden sm:inline">Sync Now</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB CONTAINER -->
+      <div class="p-6 flex-1 space-y-6">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: DASHBOARD OVERVIEW -->
+        <!-- =================================================================== -->
+        <div id="tab-dashboard" class="space-y-6">
+          
+          <!-- Key Metrics Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Total Revenue -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Gross Revenue</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">payments</span>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-white font-mono" id="stat-total-revenue">NPR 0</div>
+              <p class="text-[11px] text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">trending_up</span>
+                <span id="stat-verified-rev">NPR 0 verified payments</span>
+              </p>
+            </div>
+
+            <!-- Card 2: Total Bookings -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Total Bookings</span>
+                <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">confirmation_number</span>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-white font-mono" id="stat-total-bookings">0</div>
+              <p class="text-[11px] text-slate-400 font-bold mt-1" id="stat-seats-sold">0 seats booked across fleet</p>
+            </div>
+
+            <!-- Card 3: Pending Approvals -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Pending Verification</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">hourglass_top</span>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-amber-400 font-mono" id="stat-pending-approvals">0</div>
+              <p class="text-[11px] text-amber-400/80 font-bold mt-1">Awaiting QR receipt review</p>
+            </div>
+
+            <!-- Card 4: Fleet Occupancy -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Active Routes</span>
+                <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">alt_route</span>
+                </div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-white font-mono" id="stat-active-routes">3 Routes</div>
+              <p class="text-[11px] text-purple-400 font-bold mt-1">Daily Super VIP Liners</p>
+            </div>
+
+          </div>
+
+          <!-- Quick Action Banner -->
+          <div class="bg-gradient-to-r from-brand-900/60 via-indigo-950/60 to-slate-900 border border-brand-700/40 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/30 shrink-0">
+                <span class="material-symbols-outlined text-2xl">point_of_sale</span>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-white">Manual Counter Booking / Phone Reservation</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Quickly issue offline tickets, select VIP sofa seats, or apply counter discounts.</p>
+              </div>
+            </div>
+            <button onclick="openManualBookingModal()" class="w-full md:w-auto px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-brand-600/25 transition cursor-pointer flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-base">add_circle</span>
+              <span>Create New Booking</span>
+            </button>
+          </div>
+
+          <!-- Recent Bookings Table Preview -->
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-brand-400">schedule</span>
+                <span>Recent Incoming Bookings</span>
+              </h3>
+              <button onclick="switchAdminTab('bookings')" class="text-xs font-black text-brand-400 hover:text-brand-300 transition flex items-center gap-1 cursor-pointer">
+                <span>View All Bookings</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300 admin-table">
+                <thead class="bg-[#101a30] text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">PNR</th>
+                    <th class="py-3 px-4">Passenger</th>
+                    <th class="py-3 px-4">Route</th>
+                    <th class="py-3 px-4">Travel Date</th>
+                    <th class="py-3 px-4">Seats</th>
+                    <th class="py-3 px-4">Amount</th>
+                    <th class="py-3 px-4">Payment</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-recent-tbody" class="divide-y divide-slate-800/60">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: LIVE BOOKINGS & TICKET VERIFICATION -->
+        <!-- =================================================================== -->
+        <div id="tab-bookings" class="hidden space-y-4">
+          
+          <!-- Filters & Search Toolbar -->
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-4 flex flex-col lg:flex-row items-center justify-between gap-3 flex-wrap">
+            
+            <!-- Search Box -->
+            <div class="relative w-full lg:w-72">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+              <input type="text" id="booking-search-input" oninput="filterBookingsTable()" placeholder="Search PNR, Name, Phone, Seat..."
+                class="w-full bg-[#101a30] border border-slate-700/80 rounded-xl pl-9 pr-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-brand-500 outline-none transition" />
+            </div>
+
+            <div class="flex items-center gap-2.5 w-full lg:w-auto flex-wrap">
+              <!-- Route Filter -->
+              <select id="booking-route-filter" onchange="filterBookingsTable()" class="bg-[#101a30] border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-bold text-white focus:border-brand-500 outline-none">
+                <option value="all">All Routes</option>
+                <option value="kakarbhitta">Kathmandu ➔ Kakarbhitta</option>
+                <option value="biratnagar">Kathmandu ➔ Biratnagar</option>
+                <option value="sautha">Kathmandu ➔ Sautha</option>
+              </select>
+
+              <!-- Status Filter -->
+              <select id="booking-status-filter" onchange="filterBookingsTable()" class="bg-[#101a30] border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-bold text-white focus:border-brand-500 outline-none">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending Review (QR)</option>
+                <option value="verified">Verified / Paid</option>
+                <option value="rejected">Rejected</option>
+              </select>
+
+              <!-- Date Filter -->
+              <input type="date" id="booking-date-filter" onchange="filterBookingsTable()" class="bg-[#101a30] border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-bold text-white focus:border-brand-500 outline-none" />
+
+              <button onclick="clearBookingFilters()" title="Reset Filters" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                Clear
+              </button>
+
+              <button onclick="exportBookingsCSV()" title="Export CSV Spreadsheet" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+                <span class="material-symbols-outlined text-sm">download</span>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Bookings Table -->
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300 admin-table">
+                <thead class="bg-[#101a30] text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th class="py-3.5 px-4">PNR &amp; Date</th>
+                    <th class="py-3.5 px-4">Passenger Details</th>
+                    <th class="py-3.5 px-4">Route &amp; Departure</th>
+                    <th class="py-3.5 px-4">Boarding / Dropoff</th>
+                    <th class="py-3.5 px-4">Seats</th>
+                    <th class="py-3.5 px-4">Fare Breakdown</th>
+                    <th class="py-3.5 px-4">Method &amp; Receipt</th>
+                    <th class="py-3.5 px-4">Status</th>
+                    <th class="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bookings-full-tbody" class="divide-y divide-slate-800/60">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="bookings-empty-state" class="hidden py-16 text-center text-slate-500 space-y-2">
+              <span class="material-symbols-outlined text-4xl text-slate-600">inbox</span>
+              <p class="text-sm font-bold">No bookings found matching current filters.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: WORDPRESS-STYLE FULL SITE EDITOR (VISUAL CMS) -->
+        <!-- =================================================================== -->
+        <div id="tab-site-editor" class="hidden space-y-6">
+          
+          <div class="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-slate-800">
+            <div>
+              <h3 class="text-base font-black text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-400">tune</span>
+                <span>WordPress-Style Live Site Customizer</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Edit headlines, notice bar, amenities, photos, phone numbers, stats and payment QRs.</p>
+            </div>
+
+            <button onclick="saveAllSiteContent()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-700/20 transition cursor-pointer flex items-center gap-2 active:scale-95">
+              <span class="material-symbols-outlined text-base">save</span>
+              <span>Publish / Save Changes</span>
+            </button>
+          </div>
+
+          <!-- CMS Sub-Sections Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Section A: Hero Headline & Slider Banners -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-2.5 text-white font-black text-sm pb-3 border-b border-slate-800">
+                <span class="material-symbols-outlined text-brand-400">view_carousel</span>
+                <span>1. Hero Banner &amp; Slider Settings</span>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Main Hero Headline</label>
+                  <input type="text" id="cms-hero-headline" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-bold text-white focus:border-brand-500 outline-none" />
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Subheadline &amp; Feature Highlights</label>
+                  <textarea id="cms-hero-subheadline" rows="2" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-300 focus:border-brand-500 outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Slide 1 Image</label>
+                    <input type="text" id="cms-slide-1" placeholder="slider-banner-3.png" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Slide 2 Image</label>
+                    <input type="text" id="cms-slide-2" placeholder="slider-banner-1.png" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Slide 3 Image</label>
+                    <input type="text" id="cms-slide-3" placeholder="slider-banner-2.png" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-white outline-none" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section B: Top Notice Bar -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-2.5 text-white font-black text-sm pb-3 border-b border-slate-800">
+                <span class="material-symbols-outlined text-amber-400">campaign</span>
+                <span>2. Top Announcement &amp; Festival Notice</span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <input type="checkbox" id="cms-notice-enable-toggle" class="w-4 h-4 rounded text-brand-600 cursor-pointer" />
+                  <label for="cms-notice-enable-toggle" class="text-xs font-bold text-slate-300 cursor-pointer">Show Announcement Bar on Website</label>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Notice Bar Message</label>
+                  <input type="text" id="cms-notice-msg" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-white focus:border-brand-500 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section C: Company Contact Details & Hotlines -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-2.5 text-white font-black text-sm pb-3 border-b border-slate-800">
+                <span class="material-symbols-outlined text-emerald-400">contact_phone</span>
+                <span>3. Company Profile &amp; 24/7 Hotlines</span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Company Name</label>
+                    <input type="text" id="cms-comp-name" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tagline</label>
+                    <input type="text" id="cms-comp-tagline" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-white outline-none" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Dispatch Phone Hotline</label>
+                    <input type="text" id="cms-comp-phone" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">WhatsApp Number</label>
+                    <input type="text" id="cms-comp-whatsapp" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-mono text-white outline-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Head Office Address</label>
+                  <input type="text" id="cms-comp-address" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-white outline-none" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section D: Key Performance Stats -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-2.5 text-white font-black text-sm pb-3 border-b border-slate-800">
+                <span class="material-symbols-outlined text-purple-400">query_stats</span>
+                <span>4. Performance Statistics (4 Landscape Badges)</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-[#101a30] p-3 rounded-xl border border-slate-800">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Stat 1 (On-Time)</label>
+                  <input type="text" id="cms-stat1-num" placeholder="99.8%" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-white mb-1 outline-none" />
+                  <input type="text" id="cms-stat1-label" placeholder="On-Time Performance" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 outline-none" />
+                </div>
+
+                <div class="bg-[#101a30] p-3 rounded-xl border border-slate-800">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Stat 2 (Passengers)</label>
+                  <input type="text" id="cms-stat2-num" placeholder="150,000+" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-white mb-1 outline-none" />
+                  <input type="text" id="cms-stat2-label" placeholder="Satisfied Passengers" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 outline-none" />
+                </div>
+
+                <div class="bg-[#101a30] p-3 rounded-xl border border-slate-800">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Stat 3 (GPS Tracking)</label>
+                  <input type="text" id="cms-stat3-num" placeholder="24/7" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-white mb-1 outline-none" />
+                  <input type="text" id="cms-stat3-label" placeholder="Live GPS Telemetry" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 outline-none" />
+                </div>
+
+                <div class="bg-[#101a30] p-3 rounded-xl border border-slate-800">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Stat 4 (Sanitation)</label>
+                  <input type="text" id="cms-stat4-num" placeholder="100%" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-white mb-1 outline-none" />
+                  <input type="text" id="cms-stat4-label" placeholder="Cabin Sanitation" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section E: Payment QR Codes & Merchant Info -->
+            <div class="lg:col-span-2 bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+              <div class="flex items-center gap-2.5 text-white font-black text-sm pb-3 border-b border-slate-800">
+                <span class="material-symbols-outlined text-rose-400">qr_code_2</span>
+                <span>5. Payment QR Images &amp; Merchant Banking Setup</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- Fonepay Setup -->
+                <div class="bg-[#101a30] p-4 rounded-xl border border-slate-800 space-y-2">
+                  <span class="text-xs font-black text-rose-400 uppercase block">Fonepay QR</span>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">QR Image File</label>
+                    <input type="text" id="cms-qr-fonepay-img" placeholder="fonepay-qr.jpg" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">Merchant Name</label>
+                    <input type="text" id="cms-qr-fonepay-merchant" placeholder="POKHAREL YATAYAT SEWA" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white outline-none" />
+                  </div>
+                </div>
+
+                <!-- eSewa Setup -->
+                <div class="bg-[#101a30] p-4 rounded-xl border border-slate-800 space-y-2">
+                  <span class="text-xs font-black text-emerald-400 uppercase block">eSewa QR</span>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">QR Image File</label>
+                    <input type="text" id="cms-qr-esewa-img" placeholder="esewa-qr.png" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">eSewa ID / Phone</label>
+                    <input type="text" id="cms-qr-esewa-id" placeholder="9841259931" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white outline-none" />
+                  </div>
+                </div>
+
+                <!-- Khalti Setup -->
+                <div class="bg-[#101a30] p-4 rounded-xl border border-slate-800 space-y-2">
+                  <span class="text-xs font-black text-purple-400 uppercase block">Khalti QR</span>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">QR Image File</label>
+                    <input type="text" id="cms-qr-khalti-img" placeholder="khalti-qr.png" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-white outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-400">Khalti ID / Merchant</label>
+                    <input type="text" id="cms-qr-khalti-id" placeholder="DIAMOND AIRBUS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white outline-none" />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: LIVE SEAT MATRIX & MANUAL BOOKING -->
+        <!-- =================================================================== -->
+        <div id="tab-seatmap" class="hidden space-y-6">
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Select Route</label>
+                <select id="seatmap-route-select" onchange="renderAdminSeatMatrix()" class="bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none cursor-pointer">
+                  <option value="ktm-kakarbhitta">Kathmandu ➔ Kakarbhitta</option>
+                  <option value="ktm-biratnagar">Kathmandu ➔ Biratnagar</option>
+                  <option value="ktm-sautha">Kathmandu ➔ Sautha</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Travel Date</label>
+                <input type="date" id="seatmap-date-select" onchange="renderAdminSeatMatrix()" class="bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="openManualBookingModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer">
+                <span class="material-symbols-outlined text-sm">add</span>
+                <span>Manual Seat Booking</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Seat Matrix Container -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left 2 Cols: Interactive Coach View -->
+            <div class="lg:col-span-2 bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 flex flex-col items-center">
+              
+              <!-- Bus Cockpit Indicator -->
+              <div class="w-full max-w-sm bg-[#101a30] rounded-xl p-3 border border-slate-700 mb-6 flex items-center justify-between text-xs text-slate-400 font-bold">
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base">airline_seat_recline_normal</span> Driver Cockpit</span>
+                <span class="text-brand-400 uppercase font-black text-[10px]">33-Seat VIP Layout</span>
+              </div>
+
+              <!-- Seat Grid Target -->
+              <div id="admin-seat-map-grid" class="space-y-2 max-w-sm w-full">
+                <!-- Rendered dynamically -->
+              </div>
+
+              <!-- Legend -->
+              <div class="flex items-center gap-4 text-xs font-bold text-slate-400 mt-8 pt-4 border-t border-slate-800 w-full justify-center flex-wrap">
+                <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#101a30] border border-slate-600"></span> Available</span>
+                <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-purple-950 border border-purple-500"></span> Sleeper</span>
+                <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-red-950 border border-red-500"></span> Booked / Occupied</span>
+              </div>
+            </div>
+
+            <!-- Right 1 Col: Selected Seat Info & Quick Action -->
+            <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between">
+              <div>
+                <h3 class="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-base text-brand-400">info</span>
+                  <span>Seat Inspector</span>
+                </h3>
+                <div id="seat-inspector-body" class="bg-[#101a30] rounded-xl p-4 border border-slate-800 text-xs text-slate-400 space-y-2">
+                  <p class="font-bold text-slate-300">Click any seat on the bus layout to view passenger info or toggle reservation status.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 5: ROUTES & PRICING -->
+        <!-- =================================================================== -->
+        <div id="tab-routes" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-white">Express Route Catalog</h3>
+              <p class="text-xs text-slate-400">Manage base ticket pricing, departure schedules, and fleet coach assignments.</p>
+            </div>
+            <button onclick="openNewRouteModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add_circle</span>
+              <span>Add New Route</span>
+            </button>
+          </div>
+
+          <div id="routes-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 6: FLEET & COACHES -->
+        <!-- =================================================================== -->
+        <div id="tab-fleet" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-white">Active Luxury Coach Fleet</h3>
+              <p class="text-xs text-slate-400">Air-suspension liners with onboard telemetry and luxury amenities.</p>
+            </div>
+            <button onclick="openNewFleetModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add_circle</span>
+              <span>Register Bus</span>
+            </button>
+          </div>
+
+          <div id="fleet-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 7: MEDIA & IMAGE UPLOADS -->
+        <!-- =================================================================== -->
+        <div id="tab-media" class="hidden space-y-6">
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-black text-white">Media Library &amp; Direct Image Upload</h3>
+                <p class="text-xs text-slate-400">Upload new bus photos, QR codes, or destination landmarks directly to server.</p>
+              </div>
+            </div>
+
+            <!-- Upload Drop Zone -->
+            <div class="border-2 border-dashed border-slate-700 hover:border-brand-500 rounded-2xl p-8 text-center bg-[#101a30]/60 space-y-3 transition">
+              <span class="material-symbols-outlined text-4xl text-brand-400">cloud_upload</span>
+              <div>
+                <p class="text-xs font-bold text-white">Click or drag image file here to upload</p>
+                <p class="text-[11px] text-slate-500">Supports PNG, JPG, JPEG, WEBP (Max 10MB)</p>
+              </div>
+              <input type="file" id="media-upload-input" accept="image/*" onchange="handleAdminMediaUpload(this)" class="hidden" />
+              <button onclick="document.getElementById('media-upload-input').click()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs cursor-pointer shadow-md">
+                Browse Files
+              </button>
+            </div>
+
+            <div id="media-upload-status" class="hidden text-xs font-bold p-3 rounded-xl text-center"></div>
+
+            <!-- Image Gallery Grid -->
+            <div class="pt-4 border-t border-slate-800">
+              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Workspace Image Assets</h4>
+              <div id="media-gallery-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 8: COUNTER STAFF & POS PERMISSIONS -->
+        <!-- =================================================================== -->
+        <div id="tab-staff" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-white">Station Counter Officers</h3>
+              <p class="text-xs text-slate-400">Manage booking staff logins across physical counters (Jorpati, Koteshwor, Chabahil, etc.).</p>
+            </div>
+            <button onclick="openNewStaffModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+              <span class="material-symbols-outlined text-sm">person_add</span>
+              <span>Add Staff Officer</span>
+            </button>
+          </div>
+
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-300 admin-table">
+              <thead class="bg-[#101a30] text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4">Staff Name</th>
+                  <th class="py-3.5 px-4">Counter Station</th>
+                  <th class="py-3.5 px-4">Phone</th>
+                  <th class="py-3.5 px-4">Role</th>
+                  <th class="py-3.5 px-4">Passcode</th>
+                  <th class="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staff-table-tbody" class="divide-y divide-slate-800/60">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 9: CHARTER & PRIVATE BUS INQUIRIES -->
+        <!-- =================================================================== -->
+        <div id="tab-charters" class="hidden space-y-6">
+          <div>
+            <h3 class="text-base font-black text-white">Full Bus Charter Inquiries</h3>
+            <p class="text-xs text-slate-400">Private group tours, corporate travels, and wedding charters submitted by passengers.</p>
+          </div>
+
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-300 admin-table">
+              <thead class="bg-[#101a30] text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4">Ref ID</th>
+                  <th class="py-3.5 px-4">Client Name</th>
+                  <th class="py-3.5 px-4">Phone / WhatsApp</th>
+                  <th class="py-3.5 px-4">Route</th>
+                  <th class="py-3.5 px-4">Date &amp; Duration</th>
+                  <th class="py-3.5 px-4">Notes</th>
+                  <th class="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="charters-table-tbody" class="divide-y divide-slate-800/60">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 10: SYSTEM BACKUP & MASTER WIPE -->
+        <!-- =================================================================== -->
+        <div id="tab-system" class="hidden space-y-6 max-w-4xl">
+          
+          <!-- Backup Card -->
+          <div class="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 flex items-center justify-between gap-4">
+            <div>
+              <h3 class="text-base font-black text-white">Download Full System JSON Backup</h3>
+              <p class="text-xs text-slate-400 mt-1">Export all live customer bookings, routes, staff accounts, and configurations.</p>
+            </div>
+            <button onclick="downloadSystemBackup()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer">
+              <span class="material-symbols-outlined text-sm">cloud_download</span>
+              <span>Download Backup</span>
+            </button>
+          </div>
+
+          <!-- Danger Zone: Master Erase Data -->
+          <div class="bg-rose-950/20 border border-rose-900/60 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-3 text-rose-400 font-black text-sm uppercase tracking-wider">
+              <span class="material-symbols-outlined text-xl">warning</span>
+              <span>Danger Zone: Master Data Wipe</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              This action will permanently erase all passenger booking records and reset all seat reservations.
+            </p>
+            <button onclick="promptMasterDataWipe()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/20 transition cursor-pointer flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">delete_forever</span>
+              <span>Master Wipe All Bookings</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: PAYMENT RECEIPT PREVIEW -->
+  <!-- ========================================================================= -->
+  <div id="receipt-modal" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-center relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand-400">receipt_long</span>
+          <span>Payment Screenshot Verification</span>
+        </h3>
+        <button onclick="closeReceiptModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div class="bg-[#070b14] rounded-2xl p-2 border border-slate-800 max-h-[60vh] overflow-auto flex items-center justify-center">
+        <img id="receipt-modal-img" src="" alt="Payment Receipt" class="max-h-[55vh] object-contain rounded-xl" />
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+        <span id="receipt-modal-pnr" class="font-mono font-bold text-white">PNR: -</span>
+        <span id="receipt-modal-amount" class="font-bold text-emerald-400">Amount: -</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button id="receipt-btn-approve" onclick="approveCurrentReceipt()" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md">
+          <span class="material-symbols-outlined text-base">check_circle</span>
+          <span>Approve &amp; Verify</span>
+        </button>
+        <button id="receipt-btn-reject" onclick="rejectCurrentReceipt()" class="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md">
+          <span class="material-symbols-outlined text-base">cancel</span>
+          <span>Reject</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT ROUTE FORM -->
+  <!-- ========================================================================= -->
+  <div id="route-modal" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white" id="route-modal-title">Add / Edit Route</h3>
+        <button onclick="closeRouteModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <form id="route-edit-form" onsubmit="event.preventDefault(); saveRouteModalData();" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-route-idx" value="-1" />
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Origin City</label>
+          <input type="text" id="modal-route-from" placeholder="Kathmandu" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Destination City</label>
+          <input type="text" id="modal-route-to" placeholder="e.g. Biratnagar / Kakarbhitta" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Base Fare (NPR)</label>
+            <input type="number" id="modal-route-price" placeholder="2200" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Departure Time</label>
+            <input type="text" id="modal-route-time" placeholder="04:30 PM" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Landmark Photo File</label>
+          <input type="text" id="modal-route-img" placeholder="dest-kakarvitta-landmark.png" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-[11px] outline-none" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeRouteModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-black uppercase tracking-wider">Save Route</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT STAFF FORM -->
+  <!-- ========================================================================= -->
+  <div id="staff-modal" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white" id="staff-modal-title">Add Staff Officer</h3>
+        <button onclick="closeStaffModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <form id="staff-edit-form" onsubmit="event.preventDefault(); saveStaffModalData();" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-staff-idx" value="-1" />
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Full Name</label>
+          <input type="text" id="modal-staff-name" placeholder="e.g. Ramesh Shrestha" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Counter Station Location</label>
+          <input type="text" id="modal-staff-location" placeholder="e.g. Jorpati / Koteshwor" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Mobile Phone</label>
+            <input type="tel" id="modal-staff-phone" placeholder="98XXXXXXXX" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Passcode</label>
+            <input type="text" id="modal-staff-passcode" placeholder="Staff@123" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none" />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeStaffModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-black uppercase tracking-wider">Save Staff</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT FLEET BUS FORM -->
+  <!-- ========================================================================= -->
+  <div id="fleet-modal" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white" id="fleet-modal-title">Register Luxury Bus</h3>
+        <button onclick="closeFleetModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <form id="fleet-edit-form" onsubmit="event.preventDefault(); saveFleetModalData();" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-fleet-idx" value="-1" />
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Bus Name & Number</label>
+          <input type="text" id="modal-fleet-name" placeholder="e.g. Diamond VIP Airbus #1" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Assigned Route</label>
+          <input type="text" id="modal-fleet-route" placeholder="e.g. Kathmandu ⇄ Kakarbhitta" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Bus Category / Class</label>
+            <input type="text" id="modal-fleet-category" placeholder="2x1 Super Luxury Sofa" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Coach Image File</label>
+            <input type="text" id="modal-fleet-image" placeholder="diamond-pink-bus-1.jpg" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-[11px] outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase mb-1">Onboard Amenities</label>
+          <input type="text" id="modal-fleet-amenities" placeholder="Reclining Sofas, Free WiFi, AC, USB Ports" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white outline-none" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeFleetModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-black uppercase tracking-wider">Save Bus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: MANUAL COUNTER BOOKING FORM -->
+  <!-- ========================================================================= -->
+  <div id="manual-booking-modal" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0d1527] border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand-400">point_of_sale</span>
+          <span>Manual Counter Booking</span>
+        </h3>
+        <button onclick="closeManualBookingModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitManualBooking();" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Passenger Name *</label>
+            <input type="text" id="manual-pass-name" placeholder="Full Name" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Phone Number *</label>
+            <input type="tel" id="manual-pass-phone" placeholder="98XXXXXXXX" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Route</label>
+            <select id="manual-route-select" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none">
+              <option value="Kathmandu ➔ Kakarbhitta">Kathmandu ➔ Kakarbhitta</option>
+              <option value="Kathmandu ➔ Biratnagar">Kathmandu ➔ Biratnagar</option>
+              <option value="Kathmandu ➔ Sautha">Kathmandu ➔ Sautha</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Travel Date</label>
+            <input type="date" id="manual-travel-date" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Seat Codes (comma separated)</label>
+            <input type="text" id="manual-seats" placeholder="e.g. A1, A2" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Total Amount (NPR)</label>
+            <input type="number" id="manual-amount" placeholder="2200" required class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Payment Method</label>
+            <select id="manual-payment-method" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none">
+              <option value="Cash at Counter">Cash at Counter</option>
+              <option value="Fonepay QR">Fonepay QR</option>
+              <option value="eSewa Wallet">eSewa Wallet</option>
+              <option value="Khalti Wallet">Khalti Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-400 uppercase mb-1">Payment Status</label>
+            <select id="manual-payment-status" class="w-full bg-[#101a30] border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none">
+              <option value="verified">Verified (Paid)</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeManualBookingModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-black uppercase tracking-wider">Confirm Offline Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Core Admin Logic Scripts -->
+  <script src="admin.js?v=3.8"></script>
+</body>
+</html>

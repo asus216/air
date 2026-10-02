@@ -1,0 +1,4 @@
+# Diamond Airbus Backend Requirements
+# The backend server uses Python standard library modules (http.server, json, threading, etc.)
+# No external third-party dependencies are required to run server.py.
+# Compatible with Python 3.8+

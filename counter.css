@@ -1,0 +1,15 @@
+/* =============================================================================
+   DIAMOND AIRBUS — STAFF COUNTER POS STYLES
+   Extracted from counter.html for clean code organization
+   ============================================================================= */
+
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+.material-symbols-outlined { text-transform: none !important; }
+.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+
+/* Print styles */
+@media print {
+  body * { visibility: hidden; }
+  #printable-ticket, #printable-ticket * { visibility: visible; }
+  #printable-ticket { position: absolute; left: 0; top: 0; width: 100%; }
+}

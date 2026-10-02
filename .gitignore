@@ -1,0 +1,40 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.bak
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Browser & Test Dumps
+chrome_temp/
+*.log
+screenshot*.png
+crew_screenshot*.png
+
+# Dynamic Uploads / Receipts (Preserve directory structure via .gitkeep)
+receipts/*
+!receipts/.gitkeep
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
